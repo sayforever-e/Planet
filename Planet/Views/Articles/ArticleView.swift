@@ -252,10 +252,12 @@ struct ArticleView: View {
     @State private var sharingItem: URL?
     @State private var currentItemHost: String? = nil
     @State private var currentItemLink: String? = nil
+    @State private var themeColor: NSColor? = nil
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(spacing: 0) {
-            ArticleWebView(url: $url)
+            ArticleWebView(url: $url, themeColor: $themeColor)
             ArticleAudioPlayer()
             ArticleSpeechPlayer()
             if let article = planetStore.selectedArticle, let myArticle = article as? MyArticleModel, let planet = myArticle.planet {
@@ -267,7 +269,8 @@ struct ArticleView: View {
         }
         .frame(minWidth: 400)
         .background(
-            Color(NSColor.textBackgroundColor)
+            Color(themeColor ?? NSColor.textBackgroundColor)
+                .edgesIgnoringSafeArea(.all)
         )
         .onChange(of: planetStore.selectedArticle) { _ in
             syncReaderViewPreference()
@@ -284,6 +287,9 @@ struct ArticleView: View {
         }
         .onChange(of: ipfsState.online) { online in
             handleIPFSOnlineChange(online)
+        }
+        .onChange(of: colorScheme) { _ in
+            reExtractThemeColor()
         }
         .onAppear {
             syncReaderViewPreference()
@@ -654,6 +660,17 @@ struct ArticleView: View {
             url = Self.noSelectionURL
         }
 
+        // Pre-extract theme-color for local HTML files.
+        // For remote URLs, keep the current color until JS extraction reports in didFinish.
+        if url.isFileURL {
+            themeColor = ThemeColorExtractor.extractColor(from: url)
+        }
+        #if DEBUG
+        ThemeColorExtractor.debugLog(
+            "syncPresentation: url=\(url.lastPathComponent) themeColor=\(String(describing: themeColor))"
+        )
+        #endif
+
         normalizeCurrentItemLink()
 
         if let host = currentItemHost {
@@ -671,6 +688,11 @@ struct ArticleView: View {
         debugPrint(
             "Current prepared transaction memo is \(planetStore.walletTransactionMemo)"
         )
+    }
+
+    private func reExtractThemeColor() {
+        guard url.isFileURL else { return }
+        themeColor = ThemeColorExtractor.extractColor(from: url)
     }
 
     private func handleIPFSOnlineChange(_ online: Bool) {

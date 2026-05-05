@@ -24,6 +24,7 @@ private struct PlanetMainWindowReader: NSViewRepresentable {
     func updateNSView(_ nsView: PlanetMainWindowReaderView, context: Context) {
         if let window = nsView.window {
             PlanetMainWindowFocus.shared.window = window
+            window.titlebarAppearsTransparent = true
         }
     }
 }
@@ -32,6 +33,10 @@ private final class PlanetMainWindowReaderView: NSView {
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         PlanetMainWindowFocus.shared.window = window
+        if let window = window {
+            window.titlebarAppearsTransparent = true
+            window.styleMask.insert(.fullSizeContentView)
+        }
     }
 }
 
@@ -51,7 +56,6 @@ struct PlanetMainView: View {
             ArticleListView()
 
             ArticleView()
-                .edgesIgnoringSafeArea(.vertical)
         }
         .background(PlanetMainWindowReader())
         .alert(isPresented: $planetStore.isShowingAlert) {

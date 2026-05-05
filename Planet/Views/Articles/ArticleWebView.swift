@@ -6,6 +6,7 @@ struct ArticleWebView: NSViewRepresentable {
     static let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "ArticleWebView")
 
     @Binding var url: URL
+    @Binding var themeColor: NSColor?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -195,6 +196,39 @@ struct ArticleWebView: NSViewRepresentable {
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             debugPrint("ArticleWebView: didFinish \(String(describing: navigation))")
+            #if DEBUG
+            ThemeColorExtractor.debugLog("didFinish: url=\(webView.url?.lastPathComponent ?? "nil") themeColor=\(String(describing: parent.themeColor))")
+            #endif
+            extractThemeColorIfNeeded(from: webView)
+        }
+
+        private func extractThemeColorIfNeeded(from webView: WKWebView) {
+            guard let currentURL = webView.url, !currentURL.isFileURL else { return }
+            let js = """
+            (function() {
+                var isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var darkMeta = document.querySelector('meta[name="theme-color"][media*="dark"]');
+                if (isDark && darkMeta) return darkMeta.content;
+                var lightMeta = document.querySelector('meta[name="theme-color"][media*="light"]');
+                if (!isDark && lightMeta) return lightMeta.content;
+                var generic = document.querySelector('meta[name="theme-color"]:not([media])') || document.querySelector('meta[name="theme-color"]');
+                return generic ? generic.content : null;
+            })()
+            """
+            webView.evaluateJavaScript(js) { [weak self] result, _ in
+                guard let self = self else { return }
+                let color: NSColor?
+                if let colorString = result as? String {
+                    color = ThemeColorExtractor.parseColor(colorString)
+                } else {
+                    color = nil
+                }
+                DispatchQueue.main.async {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        self.parent.themeColor = color
+                    }
+                }
+            }
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!)
