@@ -204,6 +204,9 @@ struct ArticleWebView: NSViewRepresentable {
 
         private func extractThemeColorIfNeeded(from webView: WKWebView) {
             guard let currentURL = webView.url, !currentURL.isFileURL else { return }
+            // First try <meta name="theme-color">, then fall back to the page's
+            // computed body background color (catches sites like daringfireball.net
+            // that style their background via CSS but have no theme-color meta tag).
             let js = """
             (function() {
                 var isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -212,7 +215,10 @@ struct ArticleWebView: NSViewRepresentable {
                 var lightMeta = document.querySelector('meta[name="theme-color"][media*="light"]');
                 if (!isDark && lightMeta) return lightMeta.content;
                 var generic = document.querySelector('meta[name="theme-color"]:not([media])') || document.querySelector('meta[name="theme-color"]');
-                return generic ? generic.content : null;
+                if (generic) return generic.content;
+                var bodyBg = window.getComputedStyle(document.body).backgroundColor;
+                if (bodyBg && bodyBg !== 'rgba(0, 0, 0, 0)' && bodyBg !== 'transparent') return bodyBg;
+                return null;
             })()
             """
             webView.evaluateJavaScript(js) { [weak self] result, _ in

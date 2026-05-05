@@ -69,35 +69,70 @@ struct ThemeColorExtractor {
         return parseColor(entries[0].color)
     }
 
-    /// Parse a CSS hex color string into NSColor.
+    /// Parse a CSS color string into NSColor.
+    /// Supports hex (#rgb, #rrggbb, #rrggbbaa) and rgb()/rgba() notation.
     static func parseColor(_ colorString: String) -> NSColor? {
         let trimmed = colorString.trimmingCharacters(in: .whitespaces)
-        guard trimmed.hasPrefix("#") else { return nil }
 
-        let hex = String(trimmed.dropFirst())
+        if trimmed.hasPrefix("#") {
+            return parseHexColor(trimmed)
+        }
+        if trimmed.hasPrefix("rgb") {
+            return parseRGBColor(trimmed)
+        }
+        return nil
+    }
+
+    private static func parseHexColor(_ hex: String) -> NSColor? {
+        let hex = String(hex.dropFirst())
         var int: UInt64 = 0
         guard Scanner(string: hex).scanHexInt64(&int) else { return nil }
 
         let r, g, b: CGFloat
         switch hex.count {
         case 3:
-            // #rgb → expand to #rrggbb
             r = CGFloat((int >> 8) & 0xF) / 15.0
             g = CGFloat((int >> 4) & 0xF) / 15.0
             b = CGFloat(int & 0xF) / 15.0
         case 6:
-            // #rrggbb
             r = CGFloat((int >> 16) & 0xFF) / 255.0
             g = CGFloat((int >> 8) & 0xFF) / 255.0
             b = CGFloat(int & 0xFF) / 255.0
         case 8:
-            // #rrggbbaa
             r = CGFloat((int >> 24) & 0xFF) / 255.0
             g = CGFloat((int >> 16) & 0xFF) / 255.0
             b = CGFloat((int >> 8) & 0xFF) / 255.0
         default:
             return nil
         }
+        return NSColor(srgbRed: r, green: g, blue: b, alpha: 1.0)
+    }
+
+    /// Parse "rgb(r, g, b)" or "rgba(r, g, b, a)" into NSColor.
+    private static func parseRGBColor(_ str: String) -> NSColor? {
+        // Extract the numbers between parentheses
+        guard let open = str.firstIndex(of: "("),
+              let close = str.firstIndex(of: ")")
+        else { return nil }
+
+        let inner = str[str.index(after: open)..<close]
+        let parts = inner.split(separator: ",").map {
+            $0.trimmingCharacters(in: .whitespaces)
+        }
+        guard parts.count >= 3,
+              let ri = Double(parts[0]),
+              let gi = Double(parts[1]),
+              let bi = Double(parts[2])
+        else { return nil }
+
+        let r = CGFloat(ri / 255.0)
+        let g = CGFloat(gi / 255.0)
+        let b = CGFloat(bi / 255.0)
+
+        // Filter out near-white backgrounds — they're the page default and
+        // shouldn't override the system text background color.
+        if r > 0.95 && g > 0.95 && b > 0.95 { return nil }
+
         return NSColor(srgbRed: r, green: g, blue: b, alpha: 1.0)
     }
 
