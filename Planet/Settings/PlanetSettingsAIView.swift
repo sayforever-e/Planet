@@ -201,6 +201,23 @@ struct PlanetSettingsAIView: View {
                                 .textFieldStyle(.roundedBorder)
                                 .accessibilityLabel("Preferred Model")
                                 .focused($isModelFieldFocused)
+                                .overlay(alignment: .trailing) {
+                                    if !aiPreferredModel.isEmpty {
+                                        Button {
+                                            aiPreferredModel = ""
+                                            isModelFieldFocused = true
+                                        } label: {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .foregroundColor(.secondary)
+                                                .font(.system(size: 14))
+                                                .padding(.trailing, 6)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .buttonStyle(.plain)
+                                        .help("Clear Preferred Model")
+                                        .accessibilityLabel("Clear Preferred Model")
+                                    }
+                                }
                                 .onChange(of: aiPreferredModel) { newValue in
                                     UserDefaults.standard.set(newValue, forKey: .settingsAIPreferredModel)
                                     schedulePreferredModelCheck()
