@@ -101,6 +101,13 @@ struct ThemeColorExtractor {
         return NSColor(srgbRed: r, green: g, blue: b, alpha: 1.0)
     }
 
+    /// Returns true if the color's perceived luminance is dark.
+    static func isDark(_ color: NSColor) -> Bool {
+        guard let c = color.usingColorSpace(.sRGB) else { return false }
+        let luminance = 0.299 * c.redComponent + 0.587 * c.greenComponent + 0.114 * c.blueComponent
+        return luminance < 0.5
+    }
+
     // MARK: - Private Helpers
 
     private static func readHead(of url: URL, maxBytes: Int) -> Data? {

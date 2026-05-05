@@ -307,113 +307,122 @@ struct ArticleView: View {
         .toolbar {
             ToolbarItemGroup(placement: .automatic) {
                 // Functions for the current selected planet
-                toolbarPlanetView()
-                toolbarArticlePlanetAvatarView()
+                Group {
+                    toolbarPlanetView()
+                    toolbarArticlePlanetAvatarView()
+                }
+                .darkThemeToolbarStyle(isDarkThemeColor)
             }
 
             ToolbarItemGroup(placement: .automatic) {
                 Spacer()
-                if let article = planetStore.selectedArticle {
-                    Menu {
-                        ArticleSetStarView(article: article)
-                    } label: {
-                        ArticleToolbarStarView(article: article)
+                Group {
+                    if let article = planetStore.selectedArticle {
+                        Menu {
+                            ArticleSetStarView(article: article)
+                        } label: {
+                            ArticleToolbarStarView(article: article)
+                        }
                     }
-                }
 
-                if let article = planetStore.selectedArticle,
-                    article.hasAudio
-                {
-                    toolbarAudioView(article: article)
-                }
+                    if let article = planetStore.selectedArticle,
+                        article.hasAudio
+                    {
+                        toolbarAudioView(article: article)
+                    }
 
-                // Menu for accessing the attachments if any
-                if let article = planetStore.selectedArticle, let attachments = article.attachments,
-                    attachments.count > 0
-                {
-                    toolbarAttachmentsView(article: article)
-                }
+                    // Menu for accessing the attachments if any
+                    if let article = planetStore.selectedArticle, let attachments = article.attachments,
+                        attachments.count > 0
+                    {
+                        toolbarAttachmentsView(article: article)
+                    }
 
-                if (settingsAIIsReady || isOnDeviceAIAvailable), let article = planetStore.selectedArticle {
-                    Button {
-                        ArticleAIChatWindowManager.shared.open(for: article)
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "sparkles")
-                            if aiChatResponseCount > 0 {
-                                Text("\(aiChatResponseCount)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                    if (settingsAIIsReady || isOnDeviceAIAvailable), let article = planetStore.selectedArticle {
+                        Button {
+                            ArticleAIChatWindowManager.shared.open(for: article)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "sparkles")
+                                if aiChatResponseCount > 0 {
+                                    Text("\(aiChatResponseCount)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                         }
+                        .help("Chat with AI about this article")
                     }
-                    .help("Chat with AI about this article")
-                }
 
-                if let followingArticle = planetStore.selectedArticle as? FollowingArticleModel {
-                    if followingArticle.supportsReaderView {
+                    if let followingArticle = planetStore.selectedArticle as? FollowingArticleModel {
+                        if followingArticle.supportsReaderView {
+                            Button {
+                                setReaderViewEnabled(!showLocalRendered, for: followingArticle.planet)
+                                syncSelectedArticlePresentation()
+                            } label: {
+                                Image(systemName: showLocalRendered ? "globe" : "doc.richtext")
+                            }
+                            .help(showLocalRendered ? "Show Original Website" : "Show Reader View")
+                        }
+
+                        if followingArticle.supportsReadAloud {
+                            Button {
+                                toggleSpeechPlayback(for: followingArticle)
+                            } label: {
+                                Image(systemName: speechPlayerViewModel.isSpeaking ? "speaker.wave.2.fill" : "speaker.wave.2")
+                            }
+                            .disabled(detectedSpeechLanguage == nil)
+                            .help(speechPlaybackHelpText())
+                        }
+                    }
+
+                    if let article = planetStore.selectedArticle as? MyArticleModel, !article.isAggregated() {
                         Button {
-                            setReaderViewEnabled(!showLocalRendered, for: followingArticle.planet)
-                            syncSelectedArticlePresentation()
+                            do {
+                                try WriterStore.shared.editArticle(for: article)
+                            }
+                            catch {
+                                PlanetStore.shared.alert(title: "Failed to launch writer")
+                            }
                         } label: {
-                            Image(systemName: showLocalRendered ? "globe" : "doc.richtext")
+                            Image(systemName: "pencil.line")
                         }
-                        .help(showLocalRendered ? "Show Original Website" : "Show Reader View")
-                    }
-
-                    if followingArticle.supportsReadAloud {
-                        Button {
-                            toggleSpeechPlayback(for: followingArticle)
-                        } label: {
-                            Image(systemName: speechPlayerViewModel.isSpeaking ? "speaker.wave.2.fill" : "speaker.wave.2")
-                        }
-                        .disabled(detectedSpeechLanguage == nil)
-                        .help(speechPlaybackHelpText())
+                        .help("Edit Selected Article")
+                        .keyboardShortcut("e", modifiers: [.command])
                     }
                 }
-
-                if let article = planetStore.selectedArticle as? MyArticleModel, !article.isAggregated() {
-                    Button {
-                        do {
-                            try WriterStore.shared.editArticle(for: article)
-                        }
-                        catch {
-                            PlanetStore.shared.alert(title: "Failed to launch writer")
-                        }
-                    } label: {
-                        Image(systemName: "pencil.line")
-                    }
-                    .help("Edit Selected Article")
-                    .keyboardShortcut("e", modifiers: [.command])
-                }
+                .darkThemeToolbarStyle(isDarkThemeColor)
             }
 
             ToolbarItemGroup(placement: .automatic) {
                 Spacer()
-                Button {
-                    planetStore.isShowingSearch = true
-                } label: {
-                    Image(systemName: "magnifyingglass")
-                }
-                .help("Search")
-                .keyboardShortcut("f", modifiers: [.command])
-
-                if let _ = planetStore.selectedArticle {
+                Group {
                     Button {
-                        isSharing = true
+                        planetStore.isShowingSearch = true
                     } label: {
-                        Image(systemName: "square.and.arrow.up")
+                        Image(systemName: "magnifyingglass")
                     }
-                    .background(
-                        SharingServicePicker(
-                            isPresented: $isSharing,
-                            sharingItems: [
-                                sharingItem ?? URL(string: "https://planetable.eth.limo")!
-                            ]
+                    .help("Search")
+                    .keyboardShortcut("f", modifiers: [.command])
+
+                    if let _ = planetStore.selectedArticle {
+                        Button {
+                            isSharing = true
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                        .background(
+                            SharingServicePicker(
+                                isPresented: $isSharing,
+                                sharingItems: [
+                                    sharingItem ?? URL(string: "https://planetable.eth.limo")!
+                                ]
+                            )
                         )
-                    )
-                    .help("Share Selected Article")
+                        .help("Share Selected Article")
+                    }
                 }
+                .darkThemeToolbarStyle(isDarkThemeColor)
             }
         }
     }
@@ -688,6 +697,11 @@ struct ArticleView: View {
         debugPrint(
             "Current prepared transaction memo is \(planetStore.walletTransactionMemo)"
         )
+    }
+
+    private var isDarkThemeColor: Bool {
+        guard let color = themeColor else { return false }
+        return ThemeColorExtractor.isDark(color)
     }
 
     private func reExtractThemeColor() {
@@ -1038,6 +1052,19 @@ struct ArticleView: View {
             }
         default:
             EmptyView()
+        }
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func darkThemeToolbarStyle(_ isDark: Bool) -> some View {
+        if #available(macOS 26, *) {
+            self
+        } else if isDark {
+            self.environment(\.colorScheme, .dark)
+        } else {
+            self
         }
     }
 }
