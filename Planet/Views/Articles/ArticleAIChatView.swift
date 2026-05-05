@@ -1018,6 +1018,13 @@ struct ArticleAIChatView: View {
 
         if blocks.count == 1 {
             assistantMessageBlockView(blocks[0], isSecondaryStyle: usesSecondaryAssistantStyle(message))
+                .padding(
+                    .bottom,
+                    assistantMessageBlockTrailingSpacing(
+                        after: blocks[0],
+                        next: nil
+                    )
+                )
         } else {
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(Array(blocks.indices), id: \.self) { index in
@@ -1027,6 +1034,13 @@ struct ArticleAIChatView: View {
                             assistantMessageBlockSpacing(
                                 before: blocks[index],
                                 previous: index > 0 ? blocks[index - 1] : nil
+                            )
+                        )
+                        .padding(
+                            .bottom,
+                            assistantMessageBlockTrailingSpacing(
+                                after: blocks[index],
+                                next: index < blocks.count - 1 ? blocks[index + 1] : nil
                             )
                         )
                 }
@@ -1099,6 +1113,16 @@ struct ArticleAIChatView: View {
         default:
             return 12
         }
+    }
+
+    private func assistantMessageBlockTrailingSpacing(
+        after block: ArticleAIMessageBlock,
+        next: ArticleAIMessageBlock?
+    ) -> CGFloat {
+        guard next == nil, assistantMessageBlockKind(block) == .table else {
+            return 0
+        }
+        return 8
     }
 
     private func assistantMessageBlockKind(_ block: ArticleAIMessageBlock) -> ArticleAIMessageBlockKind {
