@@ -569,7 +569,8 @@ struct ArticleListView: View {
                 }
             }
             .safeAreaInset(edge: .top, spacing: 0) {
-                Spacer()
+                Rectangle()
+                    .fill(.bar)
                     .frame(height: geometry.safeAreaInsets.top)
             }
             .edgesIgnoringSafeArea(.vertical)
