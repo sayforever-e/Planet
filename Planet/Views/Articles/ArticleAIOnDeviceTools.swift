@@ -390,7 +390,7 @@ enum ArticleAIRepoGrep {
     }
 }
 
-#if canImport(FoundationModels)
+#if PLANET_ENABLE_APPLE_INTELLIGENCE && canImport(FoundationModels)
 
 import FoundationModels
 

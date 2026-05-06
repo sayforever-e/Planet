@@ -4,3 +4,5 @@
 - Sandbox-safe app logs should be written with `NSTemporaryDirectory()`; in Planet this resolves under `~/Library/Containers/xyz.planetable.Planet/Data/tmp/` (for example `planet-ai-debug.log`, `video.log`)
 - For broken SwiftPM/Xcode derived data under `/tmp/planet-derived` (for example missing `Sparkle.xcframework`), remove `/tmp/planet-derived`, run `xcodebuild -resolvePackageDependencies -onlyUsePackageVersionsFromResolvedFile -project Planet.xcodeproj -scheme "Planet" -derivedDataPath /tmp/planet-derived`, then rebuild
 - When modifying Xcode project files (.xcodeproj/project.pbxproj), use the `xcodeproj` Ruby gem instead of editing the pbxproj file directly.
+- When editing or creating files under `Technotes/`, do not manually hard-wrap prose; let the editor soft-wrap paragraphs and list items.
+- Build-time feature flags are controlled through xcconfig settings, typed runtime checks in `Planet/FeatureFlags.swift`, and documented in `Technotes/FeatureFlags.md`; use `Planet/local.xcconfig` for machine-local overrides.

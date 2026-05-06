@@ -10,7 +10,7 @@ import Combine
 import Foundation
 import SwiftUI
 
-#if canImport(FoundationModels)
+#if PLANET_ENABLE_APPLE_INTELLIGENCE && canImport(FoundationModels)
 import FoundationModels
 #endif
 
@@ -350,7 +350,13 @@ struct ArticleAIChatView: View {
 
     private func checkProviderAvailability() {
         isRemoteAvailable = UserDefaults.standard.bool(forKey: .settingsAIIsReady)
-        #if canImport(FoundationModels)
+        isOnDeviceAvailable = false
+        guard FeatureFlags.appleIntelligenceSupport else {
+            normalizeSelectedProvider()
+            return
+        }
+
+        #if PLANET_ENABLE_APPLE_INTELLIGENCE && canImport(FoundationModels)
         if #available(macOS 26.0, *) {
             let model = SystemLanguageModel.default
             if case .available = model.availability {
@@ -358,9 +364,15 @@ struct ArticleAIChatView: View {
             }
         }
         #endif
+        normalizeSelectedProvider()
+    }
+
+    private func normalizeSelectedProvider() {
         if isOnDeviceAvailable && !isRemoteAvailable {
             selectedProvider = .onDevice
         } else if isRemoteAvailable && !isOnDeviceAvailable {
+            selectedProvider = .remote
+        } else if !isRemoteAvailable && !isOnDeviceAvailable {
             selectedProvider = .remote
         }
     }
@@ -681,6 +693,7 @@ struct ArticleAIChatView: View {
             savedScrollTarget = envelope.scrollTargetMessageID
             if let provider = envelope.provider, let restored = AIProvider(rawValue: provider) {
                 selectedProvider = restored
+                normalizeSelectedProvider()
             }
         } else if let legacy = try? JSONDecoder.shared.decode([ArticleAIChatPersistedMessage].self, from: data) {
             persisted = legacy
@@ -2200,7 +2213,7 @@ struct ArticleAIChatView: View {
     }
 
     private func sendOnDeviceMessage(prompt: String, streamingMessageID: UUID) {
-        #if canImport(FoundationModels)
+        #if PLANET_ENABLE_APPLE_INTELLIGENCE && canImport(FoundationModels)
         if #available(macOS 26.0, *) {
             Task {
                 do {

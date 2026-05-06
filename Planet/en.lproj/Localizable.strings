@@ -813,6 +813,7 @@
 "Not Enough Disk Space to Compress Video" = "Not Enough Disk Space to Compress Video";
 "Offset: %d." = "Offset: %d.";
 "On-device AI availability is unknown" = "On-device AI availability is unknown";
+"On-device AI is disabled in this build" = "On-device AI is disabled in this build";
 "On-device AI is not available" = "On-device AI is not available";
 "On-device AI is not available because Apple Intelligence is not enabled" = "On-device AI is not available because Apple Intelligence is not enabled";
 "On-device AI is not available because the model is not ready" = "On-device AI is not available because the model is not ready";

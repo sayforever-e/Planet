@@ -71,6 +71,21 @@ The following configuration variables can be overridden:
 - DEVELOPMENT_TEAM
 - CODE_SIGN_STYLE
 - ORGANIZATION_IDENTIFIER_PREFIX
+- PLANET_ENABLE_APPLE_INTELLIGENCE
+
+### Build-Time Feature Flags
+
+Planet centralizes build-time feature switches in `FeatureFlags.swift`. To enable
+or disable Apple Intelligence support for a local build, set this in
+`Planet/local.xcconfig`:
+
+```
+PLANET_ENABLE_APPLE_INTELLIGENCE = YES
+```
+
+Set it to `NO` to compile out Apple Intelligence support. Even when enabled,
+Apple Intelligence still requires a macOS 26 SDK at build time and macOS 26 or
+later at runtime.
 
 ## Build Instructions
 

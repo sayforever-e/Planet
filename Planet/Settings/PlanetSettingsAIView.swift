@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-#if canImport(FoundationModels)
+#if PLANET_ENABLE_APPLE_INTELLIGENCE && canImport(FoundationModels)
 import FoundationModels
 #endif
 
@@ -462,7 +462,13 @@ struct PlanetSettingsAIView: View {
     }
 
     private func checkOnDeviceAI() {
-        #if canImport(FoundationModels)
+        guard FeatureFlags.appleIntelligenceSupport else {
+            onDeviceAIState = .idle
+            onDeviceAILabel = L10n("On-device AI is disabled in this build")
+            return
+        }
+
+        #if PLANET_ENABLE_APPLE_INTELLIGENCE && canImport(FoundationModels)
         if #available(macOS 26.0, *) {
             let model = SystemLanguageModel.default
             switch model.availability {
