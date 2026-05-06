@@ -52,6 +52,11 @@ jobs:
           scheme: ${{ matrix.run-config['scheme'] }}
         run: xcodebuild -scheme ${scheme} -showdestinations
 
+      - name: Show Insider Feature Flags
+        env:
+          scheme: ${{ matrix.run-config['scheme'] }}
+        run: xcodebuild -scheme ${scheme} -configuration Release -showBuildSettings PLANET_ENABLE_APPLE_INTELLIGENCE=NO | grep -E 'PLANET_ENABLE_APPLE_INTELLIGENCE|SWIFT_ACTIVE_COMPILATION_CONDITIONS'
+
       - name: Set ENV
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
@@ -81,7 +86,7 @@ jobs:
         env:
           scheme: ${{ matrix.run-config['scheme'] }}
         run: |
-          xcodebuild archive -scheme ${scheme} -archivePath archive/Planet.xcarchive -showBuildTimingSummary -allowProvisioningUpdates
+          xcodebuild archive -scheme ${scheme} -archivePath archive/Planet.xcarchive -showBuildTimingSummary -allowProvisioningUpdates PLANET_ENABLE_APPLE_INTELLIGENCE=NO
 
       - name: Prepare for Codesign
         run: |
